@@ -8,6 +8,8 @@ use Bolt\Storage\Field\Collection\RepeatingFieldCollection;
 
 class Legacy extends Storage
 {
+    private $localeValuesMap = [];
+
     /**
      * Override to set localized values before hydration in legacy storage
      */
@@ -17,7 +19,7 @@ class Legacy extends Storage
         $prop = $reflection->getParentClass()->getProperty('app');
         $prop->setAccessible(true);
         $app = $prop->getValue($this);
-        $this->localeValues = $values;
+        $this->setLocaleValues($values['id'], $values);
         
         $localeSlug = $app['translate.slug'];
         if (isset($values[$localeSlug . 'data'])) {
@@ -46,7 +48,7 @@ class Legacy extends Storage
             $content = new Content($app, $contenttype, $values);
         }
         
-        $content['originalValues'] = $this->localeValues;
+        $content['originalValues'] = $this->getLocaleValues($values['id']);
         return $content;
     }
 
@@ -78,7 +80,7 @@ class Legacy extends Storage
 
         $contentType = $app['config']->get('contenttypes/' . $contentTypeName);
         
-        $values = $this->localeValues;
+        $values = $this->getLocaleValues($record->id);
         $localeSlug = $app['translate.slug'];
 
         if (isset($values[$localeSlug . 'data'])) {
@@ -153,5 +155,13 @@ class Legacy extends Storage
                 }
             }
         }
+    }
+
+    private function setLocaleValues($recordId, $values = []) {
+        $this->localeValuesMap[$recordId] = $values;
+    }
+
+    private function getLocaleValues($recordId) {
+        return $this->localeValuesMap[$recordId];
     }
 }
